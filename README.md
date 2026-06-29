@@ -1,77 +1,142 @@
-# Enx
-Encryption and decryption with C++
+# Enx — Encryption Xcelerate
 
-> I have been recently working with ciphers 
-> Encryption and Decryption, and to make my work 
-> easier, I made an Encrypter and Decrypter with 
-> pure C++
+Caesar-shift cipher CLI written in pure C++.  
+Shifts every byte (raw mode) or every letter A–Z/a–z (alpha mode) by a user-supplied integer key.
 
-# Advantages
-> 
-*Fast*
-> 
-*Clean Output*
-> 
-*Accurate*
-> 
-*Simple to use*
+---
 
-# Usage 
+## Build
 
-``` git clone https://github.com/MRX-72/Enx ```
-> 
-``` cd Enx ```
-> 
-``` bash setup.sh ```
-> 
-*Now it's ready to use*
-
-# Command
- 
-``` Enx --help  (For The syntax) ```
-> 
-*Basic command:*
-> 
-``` Enx --str "Hello World" --keyN 7 +E ```
-> 
-*Explanation:*
-> 
-> Enx (Name of the tool) 
-> 
-> --str (To state that the next word is a string)
-> 
-> "Hello World" (Text to encrypt)
-> 
-> --keyN (States that the key is a Number)
-> 
-> 7 (The key) 
-> 
-> +E (Stands for encryption)
-> 
-# Encrypted output 
-> 
+```bash
+git clone https://github.com/MRX-72/Enx
+cd Enx
+bash setup.sh
 ```
-Encrypted Text ~
 
-Olssv'^vrld
+> Requires `g++` (GCC 9+) or `clang++` (LLVM 10+).  
+> On Windows, run `setup.sh` under Git Bash / WSL, or compile manually:
 
-Key => 7
+```powershell
+g++ EncDec.cpp -O2 -std=c++17 -o Enx.exe
 ```
-> 
-# Decryption 
-> 
-*Command:*
-> 
- ```Enx --str "Olssv'^vrld" --keyN 7 +D ```
-> 
-> *+D stands for (Decryption)*
-> 
-# Output 
-```
-Enx> Decrypted Text ~
 
-Hello World
+---
 
-[+] With Key => 7
+## Syntax
+
 ```
-# Explore some other commands by typing "Enx --help"
+Enx --str "<text>" --keyN <int> +E|+D [--alpha] [--hex] [--quiet]
+```
+
+| Flag | Type | Description |
+|------|------|-------------|
+| `--str "<text>"` | string | Input text. Omit to read from stdin. |
+| `--keyN <int>` | integer | Shift key (positive or negative). |
+| `+E` | flag | Encrypt (default). |
+| `+D` | flag | Decrypt. |
+| `--alpha` | flag | Alpha-wrap mode: only A–Z / a–z shifted, wraps within alphabet. |
+| `--hex` | flag | Print hex bytes of output alongside text. |
+| `--quiet` | flag | Output result only — no banner, no labels. Useful for scripting. |
+| `--version` | flag | Print version string. |
+| `--help` | flag | Print usage. |
+
+---
+
+## Examples
+
+### Basic encrypt / decrypt (raw shift)
+
+```bash
+# Encrypt
+Enx --str "Hello World" --keyN 7 +E
+
+# Decrypt
+Enx --str "Olssv'^vrld" --keyN 7 +D
+```
+
+### Alpha-wrap mode (ROT-N, printable-safe)
+
+```bash
+# Encrypt — only letters shift, spaces/punctuation unchanged
+Enx --str "Hello, World!" --keyN 13 +E --alpha
+# Output: Uryyb, Jbeyq!
+
+# Decrypt
+Enx --str "Uryyb, Jbeyq!" --keyN 13 +D --alpha
+# Output: Hello, World!
+```
+
+### Hex output
+
+```bash
+Enx --str "ABC" --keyN 1 +E --hex
+# Output text : BCD
+# Hex         : 42 43 44
+```
+
+### Negative key
+
+```bash
+# Shift backwards — equivalent to decrypting with positive key
+Enx --str "Hello" --keyN -3 +E
+```
+
+### Stdin / pipe
+
+```bash
+echo "Secret Message" | Enx --keyN 5 +E
+
+cat ciphertext.txt | Enx --keyN 5 +D --quiet > plaintext.txt
+```
+
+### Quiet mode (scripting)
+
+```bash
+CIPHER=$(Enx --str "payload" --keyN 9 +E --quiet)
+echo "Encrypted: $CIPHER"
+```
+
+### Chaining encrypt then decrypt
+
+```bash
+Enx --str "Test" --keyN 42 +E --quiet | Enx --keyN 42 +D --quiet
+# Output: Test
+```
+
+---
+
+## Modes at a glance
+
+```
+Raw shift  (default)   — every byte += keyN
+                         non-printable bytes possible at large keys
+
+Alpha wrap (--alpha)   — only [A-Za-z] shifted
+                         wraps within a-z / A-Z boundary
+                         safe key: any integer (mod 26 applied internally)
+```
+
+---
+
+## Key behaviour
+
+```
+keyN =  0    →  output == input  (warning shown)
+keyN =  13   →  ROT13 when used with --alpha
+keyN = -N +D →  same as keyN = +N +E
+```
+
+---
+
+## Exit codes
+
+| Code | Meaning |
+|------|---------|
+| `0` | Success |
+| `1` | Bad arguments or missing input |
+
+---
+
+## License
+
+MIT — see [LICENSE](LICENSE).
